@@ -9,7 +9,7 @@ var casper = require('casper').create({
 });
 
 casper.on('waitFor.timeout', function() {
-	this.capture('tripadvisor_timed_out.png');
+	this.capture('screen_shots/tripadvisor_timed_out.png');
 });
 
 casper.on('tripadvisor.priceShown', function() {
@@ -27,5 +27,6 @@ casper.start(url, function then() {
 casper.run();
 
 var getLowestPrice = function(casper) {
+	casper.capture('screen_shots/tripadvisor_getLowestPrice.png');
 	return casper.fetchText('.first .price.chevron');
 }

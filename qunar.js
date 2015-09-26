@@ -9,7 +9,7 @@ var casper = require('casper').create({
 });
 
 casper.on('waitFor.timeout', function() {
-	this.capture('qunar_timed_out.png');
+	this.capture('screen_shots/qunar_timed_out.png');
 });
 
 casper.on('qunar.priceShown', function() {
@@ -30,12 +30,19 @@ casper.on('qunar.button.booking.first.clicked', function() {
 var url = 'http://flight.qunar.com/site/interroundtrip_compare.htm?fromCity=%E4%B8%8A%E6%B5%B7&toCity=%E6%9B%BC%E8%B0%B7&fromDate=2015-10-01&toDate=2015-10-06&fromCode=SHA&toCode=BKK&from=qunarindex&lowestPrice=null&isInter=true&favoriteKey=&showTotalPr=null';
 
 casper.start(url, function then() {
-	this.emit('qunar.priceShown');
+	casper.waitFor(function check() {
+		return this.evaluate(function() {
+        	return $('.m-loader-inner').width() > 300;
+    	});		
+	}, function then() {
+		this.emit('qunar.priceShown');
+	});
 });
 
 casper.run();
 
 var getLowestPrice = function(casper) {
+	casper.capture('screen_shots/qunar_getLowestPrice.png');
 	if (casper.exists('[id^=pkg_wrlist] .prc.low_pr')) {
 		return getLowestPriceInList(casper, '[id^=pkg_wrlist]');
 	} else {
@@ -48,7 +55,7 @@ var getLowestPriceInList = function(casper, listSelector) {
 		var lowestPrice = Infinity;
 
 		$('[id^=wrapper]', $(listSelector)).each(function() {
-			$('.os_sv', $(this)).each(function() {
+			$('.os_sv', this).each(function() {
 				var ticketPrice = parseInt($('.prc', this)[0].textContent);
 				var tax = parseInt($('.r_txt', this)[0].textContent) || 0;
 				
