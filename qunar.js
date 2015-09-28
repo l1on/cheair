@@ -9,7 +9,7 @@ var casper = require('casper').create({
 });
 
 casper.on('waitFor.timeout', function() {
-	this.capture('screen_shots/qunar_timed_out.png');
+	this.capture('screenshots/qunar_waitFor_timeout.png');
 });
 
 casper.on('qunar.priceShown', function() {
@@ -23,7 +23,11 @@ casper.on('qunar.priceShown', function() {
 
 casper.on('qunar.button.booking.first.clicked', function() {
 	this.waitWhileVisible('.qvt_loadding', function then() {
-    	this.echo(getLowestPrice(this));
+		var price = getLowestPrice(this);
+    	this.echo(price.value);
+  
+    	this.click('#' + price.button.id);
+    	this.capture('screenshots/qunar_button_booking_lowest_price_clicked.png')
     }, null, 20 * 1000);
 });
 
@@ -39,10 +43,13 @@ casper.start(url, function then() {
 	});
 });
 
+casper.page.onCallback = function(data) {
+	return casper.click;
+}
+
 casper.run();
 
 var getLowestPrice = function(casper) {
-	casper.capture('screen_shots/qunar_getLowestPrice.png');
 	if (casper.exists('[id^=pkg_wrlist] .prc.low_pr')) {
 		return getLowestPriceInList(casper, '[id^=pkg_wrlist]');
 	} else {
@@ -52,17 +59,19 @@ var getLowestPrice = function(casper) {
 
 var getLowestPriceInList = function(casper, listSelector) {
 	return casper.evaluate(function(listSelector) {
-		var lowestPrice = Infinity;
+		var lowestPrice = {value: Infinity};
 
 		$('[id^=wrapper]', $(listSelector)).each(function() {
-			$('.os_sv', this).each(function() {
+			var vendor = this;
+			$('.os_sv', vendor).each(function(index) {
 				var ticketPrice = parseInt($('.prc', this)[0].textContent);
 				var tax = parseInt($('.r_txt', this)[0].textContent) || 0;
 				
-				if (ticketPrice + tax < lowestPrice) {
-					lowestPrice = ticketPrice + tax;
+				if (ticketPrice + tax < lowestPrice.value) {
+					lowestPrice.value = ticketPrice + tax;
+					lowestPrice.button = $('.btn_book_org', vendor)[index];			
 				}
-			});	
+			});
 		});
 
 		return lowestPrice;
