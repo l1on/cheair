@@ -1,6 +1,7 @@
 var casper = require('casper').create({
 	verbose: true,
     logLevel: "debug",
+    waitTimeout: 1000 * 30,
 	pageSettings: {
 		userAgent: 'Chrome/44',
         loadImages: false,        
@@ -8,53 +9,96 @@ var casper = require('casper').create({
     },
 });
 
-casper.on('waitFor.timeout', function() {
-	this.capture('screenshots/qunar_waitFor_timeout.png');
+casper.on('waitFor.timeout', function(timeout, details) {
+	var incident = details.selector ? details.selector : details.testFx.name;
+	this.capture('screenshots/qunar_timeout_on_' + incident + '.png');
 });
 
-casper.on('qunar.priceShown', function() {
+casper.on('qunar.loaded', function() {
+	this.capture('screenshots/qunar_loaded.png');
+
+	casper.waitWhileSelector('.m-loader-inner[style*=overflow]', function then() {
+		this.emit('qunar.prices.loaded');
+	});
+});
+
+casper.on('qunar.prices.loaded', function() {
+	this.capture('screenshots/qunar_prices_loaded.png');
+	
 	this.waitUntilVisible('#filter_showAllprice_yes', function then() {
-	    this.click('#filter_showAllprice_yes');
-	    
+		this.emit('qunar.button.totalPrice.loaded');
+
+	    this.click('#filter_showAllprice_yes');    
 	    this.click('.btn_book');
 	    this.emit('qunar.button.booking.first.clicked');		
 	});
 });
 
-casper.on('qunar.button.booking.first.clicked', function() {
+casper.on('qunar.button.totalPrice.loaded', function() {
+	this.capture('screenshots/qunar.button.totalPrice.loaded.png');
+
+	this.click('#filter_showAllprice_yes');    
+	this.click('.btn_book');
 	this.waitWhileVisible('.qvt_loadding', function then() {
-		var price = getLowestPrice(this);
-    	this.echo(price.value);
-  
-    	this.click('#' + price.button.id);
-    	this.capture('screenshots/qunar_button_booking_lowest_price_clicked.png')
-    }, null, 20 * 1000);
-});
-
-var url = 'http://flight.qunar.com/site/interroundtrip_compare.htm?fromCity=%E4%B8%8A%E6%B5%B7&toCity=%E6%9B%BC%E8%B0%B7&fromDate=2015-10-01&toDate=2015-10-06&fromCode=SHA&toCode=BKK&from=qunarindex&lowestPrice=null&isInter=true&favoriteKey=&showTotalPr=null';
-
-casper.start(url, function then() {
-	casper.waitFor(function check() {
-		return this.evaluate(function() {
-        	return $('.m-loader-inner').width() > 300;
-    	});		
-	}, function then() {
-		this.emit('qunar.priceShown');
+		this.emit('qunar.prices.vendors.loaded');
 	});
 });
 
-casper.page.onCallback = function(data) {
-	return casper.click;
-}
+casper.on('qunar.prices.vendors.loaded', function() {
+	this.capture('screenshots/qunar.prices.vendors.loaded.png');
+
+	var price = getLowestPrice();
+    this.echo(price.value);
+
+	if (price.button) {
+		this.echo('#' + price.button.id);
+	} else {
+		this.each(price.buttons, function(self, button) {
+			self.echo('#' + button.id);
+		});
+	}    
+});
+
+var url = 'http://flight.qunar.com/site/interroundtrip_compare.htm?fromCity=%E4%B8%8A%E6%B5%B7&toCity=%E6%9B%BC%E8%B0%B7&fromDate=2015-12-15&toDate=2015-12-22&fromCode=SHA&toCode=BKK&from=qunarindex&lowestPrice=null&isInter=true&favoriteKey=&showTotalPr=null';
+
+casper.start(url, function then() {
+	this.emit('qunar.loaded');
+});
 
 casper.run();
 
-var getLowestPrice = function(casper) {
+var getLowestPrice = function() {
+	return casper.evaluate(function() {
+		var lowPriceInPkgList = function() {
+			return true;
+		};
+
+		if (lowPriceInPkgList()) {
+			return {
+				value: 1000,
+				buttons: [{id: 'b1'}, {id: 'b2'}]
+			};
+		}
+	});
+}
+
+/*var getLowestPrice = function(casper) {
 	if (casper.exists('[id^=pkg_wrlist] .prc.low_pr')) {
 		return getLowestPriceInList(casper, '[id^=pkg_wrlist]');
+	} else if (casper.exists('[id^=transfer_wrlist] .prc.low_pr')) {
+		var pkgPrice1st = getLowestPriceInList(casper, '[id^=transfer_wrlist]');
+
 	} else {
-		return getLowestPriceInList(casper, '[id^=out_wrlist]') + getLowestPriceInList(casper, '[id^=ret_wrlist]');
+		var outPrice = getLowestPriceInList(casper, '[id^=out_wrlist]');
+		var retPrice = getLowestPriceInList(casper, '[id^=ret_wrlist]');
+		
+		return {
+			value: outPrice.value + retPrice.value,
+			buttons: [outPrice.button, retPrice.button]
+		};
 	}
+
+
 }
 
 var getLowestPriceInList = function(casper, listSelector) {
@@ -76,4 +120,4 @@ var getLowestPriceInList = function(casper, listSelector) {
 
 		return lowestPrice;
 	}, listSelector);
-}
+}*/
