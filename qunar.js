@@ -1,7 +1,13 @@
+var SELECTORS = {
+	FLIGHT_LEGS: '.b_spc_list',
+	LOWEST_PRICE: '.low_pr'
+
+};
+
 var casper = require('casper').create({
 	verbose: true,
     logLevel: "debug",
-    waitTimeout: 1000 * 30,
+    waitTimeout: 1000 * 40,
 	pageSettings: {
 		userAgent: 'Chrome/44',
         loadImages: false,        
@@ -46,17 +52,8 @@ casper.on('qunar.button.totalPrice.loaded', function() {
 
 casper.on('qunar.prices.vendors.loaded', function() {
 	this.capture('screenshots/qunar.prices.vendors.loaded.png');
-
-	var price = getLowestPrice();
-    this.echo(price.value);
-
-	if (price.button) {
-		this.echo('#' + price.button.id);
-	} else {
-		this.each(price.buttons, function(self, button) {
-			self.echo('#' + button.id);
-		});
-	}    
+	var vendors = getLowestPricedVendors();
+   	debugger
 });
 
 var url = 'http://flight.qunar.com/site/interroundtrip_compare.htm?fromCity=%E4%B8%8A%E6%B5%B7&toCity=%E6%9B%BC%E8%B0%B7&fromDate=2015-12-15&toDate=2015-12-22&fromCode=SHA&toCode=BKK&from=qunarindex&lowestPrice=null&isInter=true&favoriteKey=&showTotalPr=null';
@@ -67,20 +64,18 @@ casper.start(url, function then() {
 
 casper.run();
 
-var getLowestPrice = function() {
+var getLowestPricedVendors = function() {
 	return casper.evaluate(function() {
-		var lowPriceInPkgList = function() {
-			return true;
-		};
-
-		if (lowPriceInPkgList()) {
+		//return $('.b_spc_list').has('.low_pr').map(function() {
 			return {
-				value: 1000,
-				buttons: [{id: 'b1'}, {id: 'b2'}]
+				price: 100,
+				bookingButton: 'button'
 			};
-		}
+		//}).get();
+		//return 3;
 	});
-}
+	//return 3;
+};
 
 /*var getLowestPrice = function(casper) {
 	if (casper.exists('[id^=pkg_wrlist] .prc.low_pr')) {
