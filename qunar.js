@@ -3,13 +3,17 @@ var SEL = {
 	LOWEST_PRICE: '.low_pr',
 	FULL_PRICE_BUTTON: '#filter_showAllprice_yes',
 	BOOKING_BUTTON: '.btn_book',
-	PRICE_LOADING_PROGRESS_BAR: '.m-loader-inner[style*=overflow]'
+	PRICE_LOADING_PROGRESS_BAR: '.m-loader-inner[style*=overflow]',
+	VENDOR_ROW: '[rel=vendor]',
+	PRICE_LINE: '.os_sv',
+	VENDOR_BOOKING_BUTTON: '.btn_book_org',
+	TICKET_PRICE: '.prc',
+	TICKET_TAX: '.r_txt'
 };
 
 var EVENTS_TO_SCREEN_CAPTURE = [
 	'qunar.loaded', 
 	'qunar.prices.loaded',
-	'qunar.button.fullPrice.loaded',
 	'qunar.prices.vendors.loaded'
 ];
 
@@ -44,16 +48,20 @@ casper.on('qunar.loaded', function() {
 casper.on('qunar.prices.loaded', function() {
 	this.click(SEL.FULL_PRICE_BUTTON);    
 	this.click(SEL.BOOKING_BUTTON);
+	
 	this.waitUntilVisible(SEL.FLIGHT_LEGS, function then() {
 		this.emit('qunar.prices.vendors.loaded');
 	});
 });
 
-casper.on('qunar.prices.vendors.loaded', function() {	
-	this.each(getLowestPricedVendors(), function(self, vendor) {
+casper.on('qunar.prices.vendors.loaded', function() {
+	var vendors = getLowestPricedVendors();
+	this.each(vendors, function(self, vendor) {
 		self.echo(vendor.price);
 		self.echo(vendor.bookingButtonId);
 	});
+
+	this.click('#' + vendors[0].bookingButtonId);
 });
 
 var url = 'http://flight.qunar.com/site/interroundtrip_compare.htm?fromCity=%E4%B8%8A%E6%B5%B7&toCity=%E6%9B%BC%E8%B0%B7&fromDate=2015-10-01&toDate=2015-10-06&fromCode=SHA&toCode=BKK&from=qunarindex&lowestPrice=null&isInter=true&favoriteKey=&showTotalPr=null';
@@ -70,16 +78,16 @@ var getLowestPricedVendors = function() {
 			var lowestPrice = Infinity;
 			var bookingButtonId = null; 
 
-			$('[rel=vendor]', this).each(function() {
+			$(SEL.VENDOR_ROW, this).each(function() {
 				var vendor = this;
 
-				$('.os_sv', vendor).each(function(index) {
-					var ticketPrice = parseInt($('.prc', this)[0].textContent);
-					var tax = parseInt($('.r_txt', this)[0].textContent) || 0;
+				$(SEL.PRICE_LINE, vendor).each(function(index) {
+					var ticketPrice = parseInt($(SEL.TICKET_PRICE, this).get(0).textContent);
+					var tax = parseInt($(SEL.TICKET_TAX, this).get(0).textContent) || 0;
 
 					if (ticketPrice + tax < lowestPrice) {
 						lowestPrice = ticketPrice + tax;
-						bookingButtonId = $('.btn_book_org', vendor).get(index).id;			
+						bookingButtonId = $(SEL.VENDOR_BOOKING_BUTTON, vendor).get(index).id;			
 					}
 				});
 			});
