@@ -24,15 +24,15 @@ var casper = require('casper').create({
     },
 });
 
-casper.on('waitFor.timeout', function(timeout, details) {
-	var incident = details.selector ? details.selector : details.testFx.name;
-	this.capture('screenshots/qunar.timeout.' + incident + '.png');
-});
-
 casper.each(EVENTS_TO_SCREEN_CAPTURE, function(self, event) {
 	self.on(event, function() {
 		this.capture('screenshots/' + event + '.png');
 	});
+});
+
+casper.on('waitFor.timeout', function(timeout, details) {
+	var incident = details.selector ? details.selector : details.testFx.name;
+	this.capture('screenshots/qunar.timeout.' + incident + '.png');
 });
 
 casper.on('qunar.loaded', function() {
@@ -41,13 +41,7 @@ casper.on('qunar.loaded', function() {
 	});
 });
 
-casper.on('qunar.prices.loaded', function() {	
-	this.waitUntilVisible(SEL.FULL_PRICE_BUTTON, function then() {
-		this.emit('qunar.button.fullPrice.loaded');		
-	});
-});
-
-casper.on('qunar.button.fullPrice.loaded', function() {
+casper.on('qunar.prices.loaded', function() {
 	this.click(SEL.FULL_PRICE_BUTTON);    
 	this.click(SEL.BOOKING_BUTTON);
 	this.waitUntilVisible(SEL.FLIGHT_LEGS, function then() {
@@ -58,7 +52,7 @@ casper.on('qunar.button.fullPrice.loaded', function() {
 casper.on('qunar.prices.vendors.loaded', function() {	
 	this.each(getLowestPricedVendors(), function(self, vendor) {
 		self.echo(vendor.price);
-		self.echo(vendor.bookingButton);
+		self.echo(vendor.bookingButtonId);
 	});
 });
 
@@ -73,50 +67,24 @@ casper.run();
 var getLowestPricedVendors = function() {
 	return casper.evaluate(function(SEL) {
 		return $(SEL.FLIGHT_LEGS).has(SEL.LOWEST_PRICE).map(function() {
-			return {
-				price: 100,
-				bookingButton: 'button'
-			};
+			var lowestPrice = Infinity;
+			var bookingButtonId = null; 
+
+			$('[rel=vendor]', this).each(function() {
+				var vendor = this;
+
+				$('.os_sv', vendor).each(function(index) {
+					var ticketPrice = parseInt($('.prc', this)[0].textContent);
+					var tax = parseInt($('.r_txt', this)[0].textContent) || 0;
+
+					if (ticketPrice + tax < lowestPrice) {
+						lowestPrice = ticketPrice + tax;
+						bookingButtonId = $('.btn_book_org', vendor).get(index).id;			
+					}
+				});
+			});
+
+			return {price: lowestPrice, bookingButtonId: bookingButtonId};
 		}).get();
 	}, SEL);
 };
-
-/*var getLowestPrice = function(casper) {
-	if (casper.exists('[id^=pkg_wrlist] .prc.low_pr')) {
-		return getLowestPriceInList(casper, '[id^=pkg_wrlist]');
-	} else if (casper.exists('[id^=transfer_wrlist] .prc.low_pr')) {
-		var pkgPrice1st = getLowestPriceInList(casper, '[id^=transfer_wrlist]');
-
-	} else {
-		var outPrice = getLowestPriceInList(casper, '[id^=out_wrlist]');
-		var retPrice = getLowestPriceInList(casper, '[id^=ret_wrlist]');
-		
-		return {
-			value: outPrice.value + retPrice.value,
-			buttons: [outPrice.button, retPrice.button]
-		};
-	}
-
-
-}
-
-var getLowestPriceInList = function(casper, listSelector) {
-	return casper.evaluate(function(listSelector) {
-		var lowestPrice = {value: Infinity};
-
-		$('[id^=wrapper]', $(listSelector)).each(function() {
-			var vendor = this;
-			$('.os_sv', vendor).each(function(index) {
-				var ticketPrice = parseInt($('.prc', this)[0].textContent);
-				var tax = parseInt($('.r_txt', this)[0].textContent) || 0;
-				
-				if (ticketPrice + tax < lowestPrice.value) {
-					lowestPrice.value = ticketPrice + tax;
-					lowestPrice.button = $('.btn_book_org', vendor)[index];			
-				}
-			});
-		});
-
-		return lowestPrice;
-	}, listSelector);
-}*/
