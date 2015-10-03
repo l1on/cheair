@@ -20,9 +20,9 @@ var EVENTS_TO_SCREEN_CAPTURE = [
 var casper = require('casper').create({
 	verbose: true,
     logLevel: "debug",
-    waitTimeout: 1000 * 50,
+    waitTimeout: 1000 * 20,
 	pageSettings: {
-		userAgent: 'Chrome/44',
+		userAgent: 'Chrome/45',
         loadImages: false,        
         loadPlugins: false
     },
@@ -37,7 +37,16 @@ casper.each(EVENTS_TO_SCREEN_CAPTURE, function(self, event) {
 });
 
 casper.on('waitFor.timeout', function(timeout, details) {
-	var incident = details.selector ? details.selector : details.testFx.name;
+	var incident = null;
+
+	if (details.selector) {
+		incident = details.selector;
+	} else if (details.testFx) {
+		incident = details.testFx.name;
+	} else if (details.visible) {
+		incident = details.visible;
+	}
+
 	this.capture('screenshots/qunar.timeout.' + incident + '.png');
 });
 
@@ -46,7 +55,7 @@ casper.on('popup.created', function() {
 });
 
 casper.on('popup.loaded', function(page) {
-	this.echo(page.url);
+	this.echo(getUrlAfterCaptcha(page.url));
 
 	if ((--numLoadingBookingPopups) === 0) {
 		this.exit();
@@ -76,7 +85,7 @@ casper.on('qunar.prices.vendors.loaded', function() {
 	});
 });
 
-var url = 'http://flight.qunar.com/site/interroundtrip_compare.htm?fromCity=%E4%B8%8A%E6%B5%B7&toCity=%E6%9B%BC%E8%B0%B7&fromDate=2015-10-14&toDate=2015-10-21&fromCode=SHA&toCode=BKK&from=fi_re_search&lowestPrice=null&isInter=true&favoriteKey=&showTotalPr=null';
+var url = 'http://flight.qunar.com/site/interroundtrip_compare.htm?fromCity=%E4%B8%8A%E6%B5%B7&toCity=%E6%9B%BC%E8%B0%B7&fromDate=2015-11-14&toDate=2015-11-21&fromCode=SHA&toCode=BKK&from=fi_re_search&lowestPrice=null&isInter=true&favoriteKey=&showTotalPr=null';
 
 casper.start(url, function then() {
 	this.emit('qunar.loaded');
@@ -85,6 +94,10 @@ casper.start(url, function then() {
 casper.run(function() {
 	// this function is deliberately empty so that casper will keep running until an explicit call to exit()
 });
+
+var getUrlAfterCaptcha = function(url) {
+	return url.match(/ret=(.+)/)[1];
+}
 
 var getLowestPricedVendors = function() {
 	return casper.evaluate(function(SEL) {
