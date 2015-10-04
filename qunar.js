@@ -17,18 +17,20 @@ var EVENTS_TO_SCREEN_CAPTURE = [
 	'qunar.prices.vendors.loaded'
 ];
 
+var numLoadingBookingPopups = 0;
+
+var url = 'http://flight.qunar.com/site/interroundtrip_compare.htm?fromCity=%E4%B8%8A%E6%B5%B7&toCity=%E6%9B%BC%E8%B0%B7&fromDate=2015-11-14&toDate=2015-11-21&fromCode=SHA&toCode=BKK&from=fi_re_search&lowestPrice=null&isInter=true&favoriteKey=&showTotalPr=null';
+
 var casper = require('casper').create({
 	verbose: true,
     logLevel: "debug",
-    waitTimeout: 1000 * 20,
+    waitTimeout: 1000 * 50,
 	pageSettings: {
 		userAgent: 'Chrome/45',
         loadImages: false,        
         loadPlugins: false
     },
 });
-
-var numLoadingBookingPopups = 0;
 
 casper.each(EVENTS_TO_SCREEN_CAPTURE, function(self, event) {
 	self.on(event, function() {
@@ -79,13 +81,12 @@ casper.on('qunar.prices.loaded', function() {
 
 casper.on('qunar.prices.vendors.loaded', function() {
 	var vendors = getLowestPricedVendors();
+	
 	this.each(vendors, function(self, vendor) {
 		self.echo(vendor.price);
-		self.click('#' + vendor.bookingButtonId);
+		self.click(vendor.bookingButton);
 	});
 });
-
-var url = 'http://flight.qunar.com/site/interroundtrip_compare.htm?fromCity=%E4%B8%8A%E6%B5%B7&toCity=%E6%9B%BC%E8%B0%B7&fromDate=2015-11-14&toDate=2015-11-21&fromCode=SHA&toCode=BKK&from=fi_re_search&lowestPrice=null&isInter=true&favoriteKey=&showTotalPr=null';
 
 casper.start(url, function then() {
 	this.emit('qunar.loaded');
@@ -102,8 +103,10 @@ var getUrlAfterCaptcha = function(url) {
 var getLowestPricedVendors = function() {
 	return casper.evaluate(function(SEL) {
 		return $(SEL.FLIGHT_LEGS).has(SEL.LOWEST_PRICE).map(function() {
-			var lowestPrice = Infinity;
-			var bookingButtonId = null; 
+			var lowestPricedVendor = {
+				price: Infinity,
+				bookingButton: null
+			};
 
 			$(SEL.VENDOR_ROW, this).each(function() {
 				var vendor = this;
@@ -112,14 +115,14 @@ var getLowestPricedVendors = function() {
 					var ticketPrice = parseInt($(SEL.TICKET_PRICE, this).get(0).textContent);
 					var tax = parseInt($(SEL.TICKET_TAX, this).get(0).textContent) || 0;
 
-					if (ticketPrice + tax < lowestPrice) {
-						lowestPrice = ticketPrice + tax;
-						bookingButtonId = $(SEL.VENDOR_BOOKING_BUTTON, vendor).get(index).id;			
+					if (ticketPrice + tax < lowestPricedVendor.price) {
+						lowestPricedVendor.price = ticketPrice + tax;
+						lowestPricedVendor.bookingButton = '#' + $(SEL.VENDOR_BOOKING_BUTTON, vendor).get(index).id;			
 					}
 				});
 			});
 
-			return {price: lowestPrice, bookingButtonId: bookingButtonId};
+			return lowestPricedVendor;
 		}).get();
 	}, SEL);
 };
