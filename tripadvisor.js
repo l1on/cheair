@@ -1,4 +1,8 @@
 var SEL = {
+	LOWEST_PRICE: '.first .price.chevron',
+	PRICE_LOADING_PROGRESS_BAR: '.searchProgressBar',
+	FLIGHT_LEGS: '.result_item',
+	BOOKING_BUTTON: '.purchaseLink'
 };
 
 var EVENTS_TO_SCREEN_CAPTURE = [
@@ -40,7 +44,7 @@ casper.on('waitFor.timeout', function(timeout, details) {
 });
 
 casper.on('tripadvisor.loaded', function() {
-	this.waitWhileVisible('.searchProgressBar', function then() {
+	this.waitWhileVisible(SEL.PRICE_LOADING_PROGRESS_BAR, function then() {
 		this.emit('tripadvisor.prices.loaded');
 	});
 });
@@ -62,10 +66,10 @@ casper.run();
 
 var getLowestPricedVendors = function() {
 	return casper.evaluate(function(SEL) {
-		return $('.first .price.chevron').map(function() {
+		return $(SEL.LOWEST_PRICE).map(function() {
 			return {
 				price: this.textContent,
-				bookingButton: '#' + $(this).closest('.result_item').attr('id') + ' .purchaseLink'
+				bookingButton: '#' + $(this).closest(SEL.FLIGHT_LEGS).attr('id') + ' ' + SEL.BOOKING_BUTTON
 			};
 		}).get();
 	}, SEL);
