@@ -81,11 +81,14 @@ casper.on('qunar.prices.loaded', function() {
 
 casper.on('qunar.prices.vendors.loaded', function() {
 	var vendors = getLowestPricedVendors();
-	
+	var totalPrice = null;
+
 	this.each(vendors, function(self, vendor) {
-		self.echo(vendor.price);
+		totalPrice += vendor.price;
 		self.click(vendor.bookingButton);
 	});
+
+	this.echo(totalPrice);
 });
 
 casper.start(url, function then() {
