@@ -43,6 +43,11 @@ casper.on('waitFor.timeout', function(timeout, details) {
 	this.capture('screenshots/tripadvisor.timeout.' + incident + '.png');
 });
 
+casper.on('popup.loaded', function(page) {
+	this.echo(page.url);
+	this.exit();
+});
+
 casper.on('tripadvisor.loaded', function() {
 	this.waitWhileVisible(SEL.PRICE_LOADING_PROGRESS_BAR, function then() {
 		this.emit('tripadvisor.prices.loaded');
@@ -54,7 +59,7 @@ casper.on('tripadvisor.prices.loaded', function() {
 	
 	this.each(vendors, function(self, vendor) {
 		self.echo(vendor.price);
-		self.echo(vendor.bookingButton);
+		self.click(vendor.bookingButton);
 	});
 });
 
@@ -62,7 +67,7 @@ casper.start(url, function then() {
 	this.emit('tripadvisor.loaded');
 });
 
-casper.run();
+casper.run(function() {});
 
 var getLowestPricedVendors = function() {
 	return casper.evaluate(function(SEL) {
