@@ -80,7 +80,7 @@ casper.on('qunar.prices.loaded', function() {
 });
 
 casper.on('qunar.prices.vendors.loaded', function() {
-	var vendors = getLowestPricedVendors();
+	var vendors = getLowestPricedVendorPerLeg();
 	var totalPrice = null;
 
 	this.each(vendors, function(self, vendor) {
@@ -103,7 +103,7 @@ var getUrlAfterCaptcha = function(url) {
 	return url.match(/ret=(.+)/)[1];
 }
 
-var getLowestPricedVendors = function() {
+var getLowestPricedVendorPerLeg = function() {
 	return casper.evaluate(function(SEL) {
 		return $(SEL.FLIGHT_LEGS).has(SEL.LOWEST_PRICE).map(function() {
 			var lowestPricedVendor = {

@@ -55,12 +55,10 @@ casper.on('tripadvisor.loaded', function() {
 });
 
 casper.on('tripadvisor.prices.loaded', function() {
-	var vendors = getLowestPricedVendors();
+	var vendor = getLowestPricedVendor();
 	
-	this.each(vendors, function(self, vendor) {
-		self.echo(vendor.price);
-		self.click(vendor.bookingButton);
-	});
+	this.echo(vendor.price);
+	this.click(vendor.bookingButton);
 });
 
 casper.start(url, function then() {
@@ -69,13 +67,11 @@ casper.start(url, function then() {
 
 casper.run(function() {});
 
-var getLowestPricedVendors = function() {
+var getLowestPricedVendor = function() {
 	return casper.evaluate(function(SEL) {
-		return $(SEL.LOWEST_PRICE).map(function() {
-			return {
-				price: this.textContent,
-				bookingButton: '#' + $(this).closest(SEL.FLIGHT_LEGS).attr('id') + ' ' + SEL.BOOKING_BUTTON
-			};
-		}).get();
+		return {
+			price: $(SEL.LOWEST_PRICE).get(0).textContent,
+			bookingButton: '#' + $(SEL.LOWEST_PRICE).closest(SEL.FLIGHT_LEGS).attr('id') + ' ' + SEL.BOOKING_BUTTON
+		};
 	}, SEL);
 };
