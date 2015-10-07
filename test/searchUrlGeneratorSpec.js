@@ -1,4 +1,4 @@
-var assert = require("assert");
+var expect = require('chai').expect;
 var SearchUrlGenerator = require('../lib/searchUrlGenerator');
 
 describe('searchUrlGenerator', function() {
@@ -13,7 +13,7 @@ describe('searchUrlGenerator', function() {
   			});
 
   			it('returns qunar specific url', function () {
-      			assert.notEqual(null, urlGen.run(options).match(/^http:\/\/flight\.qunar\.com\/site\/interroundtrip_compare\.htm/));
+      			expect(urlGen.run(options)).to.match(/^http:\/\/flight\.qunar\.com\/site\/interroundtrip_compare\.htm/);
     		});
 
     		context('when passed options contain {leaveDate: "2015-05-15", returnDate: "2016-12-01"}', function(){
@@ -23,7 +23,7 @@ describe('searchUrlGenerator', function() {
     			});
 
     			it('returns url with those two dates', function() {
-    				assert.notEqual(null, urlGen.run(options).match(/fromDate=2015-05-15.+toDate=2016-12-01/));
+    				expect(urlGen.run(options)).to.match(/fromDate=2015-05-15.+toDate=2016-12-01/);
     			});
     		})
   		});
@@ -34,7 +34,7 @@ describe('searchUrlGenerator', function() {
   			});
   			
   			it('returns tripadvisor specific url', function () {		
-      			assert.notEqual(null, urlGen.run(options).match(/^http:\/\/flights\.tripadvisor\.com/));
+      			expect(urlGen.run(options)).to.match(/^http:\/\/flights\.tripadvisor\.com/);
     		});
 
     		context('when passed options contain {leaveDate: "2015-05-15", returnDate: "2016-12-01"}', function(){
@@ -44,8 +44,7 @@ describe('searchUrlGenerator', function() {
     			});
 
     			it('returns url with those two dates', function() {
-    				debugger
-    				assert.notEqual(null, urlGen.run(options).match(/date0=20150515.+date1=20161201/));
+    				expect(urlGen.run(options)).to.match(/date0=20150515.+date1=20161201/);
     			});
     		})
   		});
