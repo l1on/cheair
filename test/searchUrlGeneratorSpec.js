@@ -46,7 +46,24 @@ describe('searchUrlGenerator', function() {
     			it('returns url with those two dates', function() {
     				expect(urlGen.run(options)).to.match(/date0=20150515.+date1=20161201/);
     			});
-    		})
+    		});
+
+            context('when passed options contain {from: "Shanghai", to: "Bangkok"}', function(){
+                before(function() {
+                    options['from'] = 'Shanghai';
+                    options['to'] = "Bangkok";
+                });
+
+                it('returns url with those two cities', function() {
+                    var matches = [];
+
+                    urlGen.run(options).forEach(function(url) {
+                        matches.push(url.match(/airport0=PVG.+airport1=BKK|airport0=PVG.+airport1=DMK|airport0=SHA.+airport1=DMK|airport0=SHA.+airport1=BKK/)[0]);
+                    });
+    
+                    expect(matches).to.have.members(['airport0=SHA&airport1=BKK', 'airport0=PVG&airport1=BKK', 'airport0=SHA&airport1=DMK', 'airport0=PVG&airport1=DMK']);
+                });
+            });
   		});
 
   	});
