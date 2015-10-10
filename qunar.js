@@ -19,7 +19,7 @@ var EVENTS_TO_SCREEN_CAPTURE = [
 
 var numLoadingBookingPopups = 0;
 
-var url = 'http://flight.qunar.com/site/interroundtrip_compare.htm?fromCity=%E4%B8%8A%E6%B5%B7&toCity=%E6%9B%BC%E8%B0%B7&fromDate=2015-11-14&toDate=2015-11-21&fromCode=SHA&toCode=BKK&from=fi_re_search&lowestPrice=null&isInter=true&favoriteKey=&showTotalPr=null';
+var url = 'http://flight.qunar.com/site/interroundtrip_compare.htm?fromCity=shanghai&toCity=bangkok&fromDate=2015-11-14&toDate=2015-11-21&from=fi_re_search&lowestPrice=null&isInter=true&favoriteKey=&showTotalPr=null';
 
 var casper = require('casper').create({
 	verbose: true,
@@ -80,10 +80,9 @@ casper.on('qunar.prices.loaded', function() {
 });
 
 casper.on('qunar.prices.vendors.loaded', function() {
-	var vendors = getLowestPricedVendorPerLeg();
 	var totalPrice = null;
 
-	this.each(vendors, function(self, vendor) {
+	this.each(getLowestPricedVendorPerLeg(), function(self, vendor) {
 		totalPrice += vendor.price;
 		self.click(vendor.bookingButton);
 	});

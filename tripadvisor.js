@@ -16,6 +16,7 @@ var casper = require('casper').create({
 	verbose: true,
     logLevel: "debug",
     waitTimeout: 1000 * 40,
+    viewportSize: {width: 800, height: 600},
 	pageSettings: {
 		userAgent: 'Chrome/45',
         loadImages: false,        
