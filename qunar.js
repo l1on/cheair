@@ -1,3 +1,5 @@
+var SITE = 'qunar';
+
 var SEL = {
 	FLIGHT_LEGS: '.b_spc_list',
 	LOWEST_PRICE: '.prc.low_pr',
@@ -11,46 +13,12 @@ var SEL = {
 	TICKET_TAX: '.r_txt'
 };
 
-var EVENTS_TO_SCREEN_CAPTURE = [
-	'qunar.loaded', 
-	'qunar.prices.loaded',
-	'qunar.prices.vendors.loaded'
-];
+var casper = require('./lib/casperJsInit').run(SITE, { 
+		eventsToScreenCapture: ['prices.loaded', 'prices.vendors.loaded']
+	}
+);
 
 var numLoadingBookingPopups = 0;
-
-var url = 'http://flight.qunar.com/site/interroundtrip_compare.htm?fromCity=shanghai&toCity=bangkok&fromDate=2015-11-14&toDate=2015-11-21&from=fi_re_search&lowestPrice=null&isInter=true&favoriteKey=&showTotalPr=null';
-
-var casper = require('casper').create({
-	verbose: true,
-    logLevel: "debug",
-    waitTimeout: 1000 * 50,
-	pageSettings: {
-		userAgent: 'Chrome/45',
-        loadImages: false,        
-        loadPlugins: false
-    },
-});
-
-casper.each(EVENTS_TO_SCREEN_CAPTURE, function(self, event) {
-	self.on(event, function() {
-		this.capture('screenshots/' + event + '.png');
-	});
-});
-
-casper.on('waitFor.timeout', function(timeout, details) {
-	var incident = null;
-
-	if (details.selector) {
-		incident = details.selector;
-	} else if (details.testFx) {
-		incident = details.testFx.name;
-	} else if (details.visible) {
-		incident = details.visible;
-	}
-
-	this.capture('screenshots/qunar.timeout.' + incident + '.png');
-});
 
 casper.on('popup.created', function() {
 	numLoadingBookingPopups++;
@@ -64,22 +32,22 @@ casper.on('popup.loaded', function(page) {
 	}
 });
 
-casper.on('qunar.loaded', function() {
+casper.on('loaded', function() {
 	this.waitWhileSelector(SEL.PRICE_LOADING_PROGRESS_BAR, function then() {
-		this.emit('qunar.prices.loaded');
+		this.emit('prices.loaded');
 	});
 });
 
-casper.on('qunar.prices.loaded', function() {
+casper.on('prices.loaded', function() {
 	this.click(SEL.FULL_PRICE_BUTTON);    
 	this.click(SEL.BOOKING_BUTTON);
 	
 	this.waitUntilVisible(SEL.FLIGHT_LEGS, function then() {
-		this.emit('qunar.prices.vendors.loaded');
+		this.emit('prices.vendors.loaded');
 	});
 });
 
-casper.on('qunar.prices.vendors.loaded', function() {
+casper.on('prices.vendors.loaded', function() {
 	var totalPrice = null;
 
 	this.each(getLowestPricedVendorPerLeg(), function(self, vendor) {
@@ -87,15 +55,12 @@ casper.on('qunar.prices.vendors.loaded', function() {
 		self.click(vendor.bookingButton);
 	});
 
-	this.echo(totalPrice);
-});
-
-casper.start(url, function then() {
-	this.emit('qunar.loaded');
-});
-
-casper.run(function() {
-	// this function is deliberately empty so that casper will keep running until an explicit call to exit()
+	this.echo(JSON.stringify({
+		price: {
+			from: SITE,
+			value: totalPrice			
+		}
+	}));
 });
 
 var getUrlAfterCaptcha = function(url) {
