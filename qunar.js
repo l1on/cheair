@@ -6,7 +6,7 @@ var SEL = {
 	LOWEST_PRICE: '.prc.low_pr',
 	FULL_PRICE_BUTTON: '#filter_showAllprice_yes',
 	BOOKING_BUTTON: '.btn_book',
-	PRICE_LOADING_PROGRESS_BAR: '.m-loader-inner[style*=overflow]',
+	PRICE_LOADING_FULL_PROGRESS_BAR: '.m-loader-inner[style*="width: 912px"]',
 	VENDOR_ROW: '[rel=vendor]',
 	PRICE_LINE: '.os_sv',
 	VENDOR_BOOKING_BUTTON: '.btn_book_org',
@@ -34,7 +34,7 @@ casper.on('popup.loaded', function(page) {
 });
 
 casper.on('loaded', function() {
-	this.waitWhileSelector(SEL.PRICE_LOADING_PROGRESS_BAR, function then() {
+	this.waitForSelector(SEL.PRICE_LOADING_FULL_PROGRESS_BAR, function then() {
 		this.emit('prices.loaded');
 	});
 });
