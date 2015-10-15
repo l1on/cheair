@@ -1,7 +1,8 @@
 var SITE = 'qunar';
 
 var SEL = {
-	FLIGHT_LEGS: '.b_spc_list',
+	FLIGHT_LEG: '.b_spc_list',
+	PKG_LEG: '[id^=pkg]',
 	LOWEST_PRICE: '.prc.low_pr',
 	FULL_PRICE_BUTTON: '#filter_showAllprice_yes',
 	BOOKING_BUTTON: '.btn_book',
@@ -42,7 +43,7 @@ casper.on('prices.loaded', function() {
 	this.click(SEL.FULL_PRICE_BUTTON);    
 	this.click(SEL.BOOKING_BUTTON);
 	
-	this.waitUntilVisible(SEL.FLIGHT_LEGS, function then() {
+	this.waitUntilVisible(SEL.FLIGHT_LEG, function then() {
 		this.emit('prices.vendors.loaded');
 	});
 });
@@ -69,7 +70,10 @@ var getUrlAfterCaptcha = function(url) {
 
 var getLowestPricedVendorPerLeg = function() {
 	return casper.evaluate(function(SEL) {
-		return $(SEL.FLIGHT_LEGS).has(SEL.LOWEST_PRICE).map(function() {
+		var pkgFlightLegWithLowestPrice = $(SEL.FLIGHT_LEG).filter(SEL.PKG_LEG).has(SEL.LOWEST_PRICE);
+		var flightLegsToAddup = pkgFlightLegWithLowestPrice.length > 0 ? pkgFlightLegWithLowestPrice : $(SEL.FLIGHT_LEG).not(SEL.PKG_LEG).has(SEL.LOWEST_PRICE);
+		
+		return flightLegsToAddup.map(function() {
 			var lowestPricedVendor = {
 				price: Infinity,
 				bookingButton: null
