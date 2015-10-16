@@ -16,16 +16,16 @@ var searchUrls =
 	urlGen.run(_.extend(_.clone(options), {site: 'tripadvisor'})).concat(
 	urlGen.run(_.extend(_.clone(options), {site: 'qunar'})));
 
-var flightSearchProcess = [];
+var flightSearchProcesses = [];
 var retrievedPrices = [];
 
 _.each(searchUrls, function(url) {
 	var searchProcess = spawn('casperjs', [Url.parse(url).hostname.replace(/.*\.(\w+)\.com/, '$1.js'), url]);
 	
-	flightSearchProcess.push(searchProcess);
+	flightSearchProcesses.push(searchProcess);
 
 	searchProcess.stdout.on('data', function (data) {
-		//console.log('stdout: ' + data);	
+		console.log(data.toString());	
 
 		try {
 			retrievedPrices.push(JSON.parse(data).price);
@@ -35,12 +35,10 @@ _.each(searchUrls, function(url) {
 });
 
 process.on('priceReceived', function() {
-	if (retrievedPrices.length == flightSearchProcess.length) {
+	if (retrievedPrices.length == flightSearchProcesses.length) {
 		var taLowestPrice = _.chain(retrievedPrices).where({from: 'tripadvisor'}).min(function(price) {
 			return price.value;
 		}).value();
-
-		console.log('taLowestPrice: ' + taLowestPrice.value);
 
 		var qunarPrice = _.find(retrievedPrices, function(price) {
 			return price.from == 'qunar';
@@ -49,8 +47,14 @@ process.on('priceReceived', function() {
 		console.log('qunarLowestPrice: ' + qunarPrice.value);
 
 		var marginFromQunar = qunarPrice.value - taLowestPrice.value * 6.3;
-	
-		console.log('site to buy from: ' + (marginFromQunar > 0 ? 'tripadvisor' : 'qunar'));
-		console.log('price difference: ' + Math.abs(marginFromQunar));
+
+		process.send({
+			siteToBuyFrom: (marginFromQunar > 0 ? 'tripadvisor' : 'qunar'),
+			priceDiff: Math.abs(marginFromQunar),
+			from: options.from,
+			to: options.to,
+			leaveDate: options.leaveDate,
+			returnDate: options.returnDate
+		});
 	}
 });
