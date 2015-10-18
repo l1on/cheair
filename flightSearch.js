@@ -44,8 +44,6 @@ process.on('priceReceived', function() {
 			return price.from == 'qunar';
 		});
 
-		console.log('qunarLowestPrice: ' + qunarPrice.value);
-
 		var marginFromQunar = qunarPrice.value - taLowestPrice.value * 6.3;
 
 		process.send({
