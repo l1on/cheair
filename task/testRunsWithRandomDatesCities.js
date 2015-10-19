@@ -7,15 +7,13 @@ var DAY = 1000 * 3600 * 24;
 var searchParams = [];
 var searchProcesses = [];
 
-_.times(2, function () {
-	var leaveDate = randomDate(new Date(2015, 0, 1), new Date());
-	
-	var returnDate = new Date(leaveDate.getTime() + 7 * DAY);
-	
-	console.log(leaveDate.toISOString().match(/^\d{4}-\d{2}-\d{2}/)[0] + ' ' + returnDate.toISOString().match(/^\d{4}-\d{2}-\d{2}/)[0] );
+_.times(process.argv[2], function () {
+	var dates = getFlightDates();
+	console.log(dates.leaveDate + ' ' + dates.returnDate);
+
 	searchParams.push({
-		leaveDate: '2015-11-15',
-		returnDate: '2015-12-01',
+		leaveDate: dates.leaveDate,
+		returnDate: dates.returnDate,
 		from: 'Shanghai',
 		to: 'Bangkok'		
 	});
@@ -36,3 +34,17 @@ searchParams.forEach(function (searchParam) {
 function randomDate(start, end) {
     return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
 };
+
+function getFlightDates() {
+	var dateRangeStart = new Date();
+	var dateRangeEnd = new Date(dateRangeStart.getTime() + 180 * DAY);
+
+	var leaveDate = randomDate(dateRangeStart, dateRangeEnd);
+	var returnDate = new Date(leaveDate.getTime() + 7 * DAY);
+
+	return {
+		leaveDate: leaveDate.toISOString().slice(0, 10),
+		returnDate: returnDate.toISOString().slice(0, 10)
+	};
+
+}
