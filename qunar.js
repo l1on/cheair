@@ -11,7 +11,8 @@ var SEL = {
 	PRICE_LINE: '.os_sv',
 	VENDOR_BOOKING_BUTTON: '.btn_book_org',
 	TICKET_PRICE: '.prc',
-	TICKET_TAX: '.r_txt'
+	TICKET_TAX: '.r_txt',
+	MODAL_OK_BTN: '.btn_ok'
 };
 
 var casper = require('./lib/casperJsInit').run(SITE, { 
@@ -53,7 +54,11 @@ casper.on('prices.vendors.loaded', function() {
 
 	this.each(getLowestPricedVendorPerLeg(), function(self, vendor) {
 		totalPrice += vendor.price;
-		self.click(vendor.bookingButton);
+		
+		self.click(vendor.bookingButton);	
+		if(self.visible(SEL.MODAL_OK_BTN)) {
+			self.click(SEL.MODAL_OK_BTN);
+		}
 	});
 
 	this.echo(JSON.stringify({

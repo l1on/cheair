@@ -13,7 +13,7 @@ var options = {
 var urlGen = new UrlGenerator();
 
 var searchUrls = 
-	urlGen.run(_.extend(_.clone(options), {site: 'tripadvisor'})).concat(
+	/*urlGen.run(_.extend(_.clone(options), {site: 'tripadvisor'}))*/[].concat(
 	urlGen.run(_.extend(_.clone(options), {site: 'qunar'})));
 
 var flightSearchProcesses = [];
